@@ -42,7 +42,7 @@ with settings(
         httpdpid = run('ps waux | grep httpd | grep root | grep -v grep | awk \'{ print $2 }\'')
         if getfhttpdpack == '/usr/local/sbin/httpd' and httpdpidfile == httpdpid:
             print(' You have already installed and running Apache web server...')
-            print(' If you want add new VirtualHost, please use ./python-add-virtualhost.py script. ')
+            print(' If you want add new VirtualHost, please use ./add-vhost-apmyph.py script. ')
             sys.exit()
         elif getfhttpdpack != '/usr/local/sbin/httpd':
             run('pkg install -y apache24')
