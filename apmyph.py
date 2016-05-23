@@ -110,7 +110,7 @@ with settings(
         httpdpid = run('ps waux | grep httpd | grep root | grep -v grep | awk \'{ print $2 }\'')
         if getlhttpdpack == '/usr/sbin/httpd' and httpdpidfile == httpdpid:
             print(' You have already installed and running Apache web server...')
-            print(' If you want add new VirtualHost, please use ./python-add-virtualhost.py script. nstall -y httpd')
+            print(' If you want add new VirtualHost, please use ./add-vhost-apmyph.py script')
             sys.exit()
         elif getlhttpdpack != '/usr/sbin/httpd':
             run('yum install -y httpd')
