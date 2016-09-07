@@ -35,34 +35,43 @@ with settings(
     osver = run('uname -s')
     lintype = run('cat /etc/redhat-release | awk \'{ print $1 }\'')
     ftype = run('uname -v | awk \'{ print $2 }\' | cut -f1 -d \'.\'')
+
     if osver == 'FreeBSD' and ftype >= 10:
         print(' This is FreeBSD server...')
         getfhttpdpack = run('which httpd')
         httpdpidfile = run('cat /var/run/httpd.pid')
         httpdpid = run('ps waux | grep httpd | grep root | grep -v grep | awk \'{ print $2 }\'')
+
         if getfhttpdpack == '/usr/local/sbin/httpd' and httpdpidfile == httpdpid:
             print(' You have already installed and running Apache web server...')
             print(' If you want add new VirtualHost, please use ./add-vhost-apmyph.py script. ')
             sys.exit()
+
         elif getfhttpdpack != '/usr/local/sbin/httpd':
             run('pkg install -y apache24')
-            run('echo \'apache24_enable="YES"\' >> /etc/rc.conf')
+            #run('echo \'apache24_enable="YES"\' >> /etc/rc.conf')
+            run('sysrc apache24_enable="YES"')
             ip = run('ifconfig em0 | grep \'inet \' | awk \'{ print $2 }\'')
             name = run('hostname')
             run('echo \"'+ip+' '+name+'.lan '+name+'\" >> /etc/hosts')
             put(os.getcwd()+'/jinja2temps/fhttpd.conf', '/usr/local/etc/apache24/httpd.conf')
             run('mkdir -p /usr/local/domen /var/log/httpd/ /var/www/'+sitename+'_public_html')
+
             with open(sitename+".conf", "wb") as apvhostfile:
                 apvhostfile.write(outputavText)
+
             put(sitename+'.conf', '/usr/local/domen/'+sitename+'.conf')
+
             with open("index.html", "wb") as aphtfile:
                 aphtfile.write(outputahText)
+
             put('index.html', '/var/www/'+sitename+'_public_html')
             run('/usr/local/etc/rc.d/apache24 start')
-            print('Apache 24 server installed and configured...')
+            print('Apache server installed and configured...')
             print('If you want install and configure MySQL PHP just press "Enter"!!!')
             print('If you want to exit from script write "n" and press Enter button. ')
             inst = raw_input('Please select: ')
+
             if inst == "":
                 print('You are selected "Enter" button')
                 run('pkg install -y mysql55-server')
@@ -76,38 +85,48 @@ with settings(
                 run('echo -e "\n\nfreebsd\nfreebsd\n\n\n\n\n" | mysql_secure_installation 2>/dev/null')
                 msqlpidfile = run('ps waux|grep mysql | grep -v grep| grep -v safe | awk \'{ print $2 }\'')
                 msqlpid = run('cat /var/db/mysql/*.pid')
+
                 if msqlpidfile == msqlpid:
                     print('MySQL service already running...')
                     pass
                 else:
                     sys.exit()
+
                 sitedb = raw_input('Enter name for new database: ')
                 sitedbuser = raw_input('Enter new mysql user name: ')
                 sitedbpasswd = getpass.getpass('Enter pass for '+sitedbuser+': ')
                 sitedbpasswd1 = getpass.getpass('Repeat pass for '+sitedbuser+': ')
+
                 if sitedbpasswd == sitedbpasswd1:
                     pass
                 else:
                     print('The password for site db username must be the same!!! ')
+
                 run('mysql -u root -p\'freebsd\' -e "CREATE DATABASE '+sitedb+';"')
                 run('mysql -u root -p\'freebsd\' -e "GRANT ALL PRIVILEGES ON '+sitedb+'.* TO '+sitedbuser+'@localhost IDENTIFIED BY \''+sitedbpasswd+'\';"')
                 run('mysql -u root -p\'freebsd\' -e "FLUSH PRIVILEGES;"')
                 tempphVars = { "sitedb" : sitedb, "sitedbuser" : sitedbuser, "sitedbpasswd" : sitedbpasswd}
                 outputphpText = tempphp.render( tempphVars )
+
                 with open("index.php", "wb") as aphtfile:
                     aphtfile.write(outputphpText)
+
                 put('index.php', '/var/www/'+sitename+'_public_html/index.php')
                 run('/usr/local/etc/rc.d/apache24 restart')
                 print('MySQL, Apache24 and PHP installed and configured...')
+
             elif inst == "n":
                 print('You entered "n" button.')
+
             else:
                 print('You can only press "Enter" button or write "n" and after press enter button!!!')
+
     elif osver == 'Linux' and lintype == 'CentOS':
         print(' This is CentOS server...')
         getlhttpdpack = run('which httpd')
         httpdpidfile = run('cat /var/run/httpd/httpd.pid')
         httpdpid = run('ps waux | grep httpd | grep root | grep -v grep | awk \'{ print $2 }\'')
+
         if getlhttpdpack == '/usr/sbin/httpd' and httpdpidfile == httpdpid:
             print(' You have already installed and running Apache web server...')
             print(' If you want add new VirtualHost, please use ./add-vhost-apmyph.py script')
@@ -119,17 +138,22 @@ with settings(
             run('echo \"'+ip+' '+name+'.lan '+name+'\" >> /etc/hosts')
             put(os.getcwd()+'/jinja2temps/c7httpd.conf', '/etc/httpd/conf/httpd.conf')
             run('mkdir -p /usr/local/domen /var/www/'+sitename+'_public_html')
+
             with open(sitename+".conf", "wb") as apvhostfile:
                 apvhostfile.write(outputavText)
+
             put(sitename+'.conf', '/usr/local/domen/'+sitename+'.conf')
+
             with open("index.html", "wb") as aphtfile:
                 aphtfile.write(outputahText)
+
             put('index.html', '/var/www/'+sitename+'_public_html')
             run('systemctl start httpd.service ; systemctl enable httpd.service')
-            print('Apache 24 server installed and configured...')
+            print('Apache server installed and configured...')
             print('If you want install and configure MySQL PHP just press "Enter"!!!')
             print('If you want to exit from script write "n" and press Enter button. ')
             inst = raw_input('Please select: ')
+
             if inst == "":
                 print('You are selected "Enter" button')
                 run('yum -y install mariadb-server mariadb')
@@ -142,33 +166,41 @@ with settings(
                 run('echo -e "\n\nfreebsd\nfreebsd\n\n\n\n\n" | mysql_secure_installation 2>/dev/null')
                 msqlpidfile = run('ps waux|grep mysql | grep -v grep| grep -v safe | awk \'{ print $2 }\'')
                 msqlpid = run('cat /var/run/mariadb/mariadb.pid')
+
                 if msqlpidfile == msqlpid:
                     print('MySQL service already running...')
                     pass
                 else:
                     print('MySQL service is not running...')
                     sys.exit()
+
                 sitedb = raw_input('Enter name for new database: ')
                 sitedbuser = raw_input('Enter new mysql user name: ')
                 sitedbpasswd = getpass.getpass('Enter pass for '+sitedbuser+': ')
                 sitedbpasswd1 = getpass.getpass('Repeat pass for '+sitedbuser+': ')
+
                 if sitedbpasswd == sitedbpasswd1:
                     pass
                 else:
                     print('The repeated password for '+sitedbuser+' must be the same!!! ')
+
                 run('mysql -u root -p\'freebsd\' -e "CREATE DATABASE '+sitedb+';"')
                 run('mysql -u root -p\'freebsd\' -e "GRANT ALL PRIVILEGES ON '+sitedb+'.* TO '+sitedbuser+'@localhost IDENTIFIED BY \''+sitedbpasswd+'\';"')
                 run('mysql -u root -p\'freebsd\' -e "FLUSH PRIVILEGES;"')
                 tempphVars = { "sitedb" : sitedb, "sitedbuser" : sitedbuser, "sitedbpasswd" : sitedbpasswd}
                 outputphpText = tempphp.render( tempphVars )
+
                 with open("index.php", "wb") as aphtfile:
                     aphtfile.write(outputphpText)
                 put('index.php', '/var/www/'+sitename+'_public_html/index.php')
                 run('systemctl restart httpd.service')
                 print('MySQL, Apache24 and PHP installed and configured...')
+
             elif inst == "n":
                 print('You entered "n" button.')
+
             else:
                 print('You can only press "Enter" button or write "n" and after press enter button!!!')
+
     else:
         print(' This script supports FreeBSD or CentOS7 server...')
